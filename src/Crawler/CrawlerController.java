@@ -11,8 +11,6 @@ import edu.uci.ics.crawler4j.crawler.CrawlController;
 import edu.uci.ics.crawler4j.fetcher.PageFetcher;
 import edu.uci.ics.crawler4j.robotstxt.RobotstxtConfig;
 import edu.uci.ics.crawler4j.robotstxt.RobotstxtServer;
-import java.lang.reflect.Array;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +24,7 @@ public class CrawlerController {
 
     public void setUp(String[] args) throws Exception {
 
-        if (args.length < 8) {
+        if (args.length < 7) {
             return;
         }
         int numberOfDomain = 1;
@@ -43,8 +41,8 @@ public class CrawlerController {
         int setPolitenessDelay = Integer.parseInt(args[3]);
         int setMaxDepth = Integer.parseInt(args[4]);
         int setMaxPages = Integer.parseInt(args[5]);
-        boolean setIncludeBinaryContent = Boolean.parseBoolean(args[6]);
-        boolean setResumableCrawling = Boolean.parseBoolean(args[7]);
+        //boolean setIncludeBinaryContent = Boolean.parseBoolean(args[6]);
+        boolean setResumableCrawling = Boolean.parseBoolean(args[6]);
 
         CrawlConfig config = new CrawlConfig();
 
@@ -52,7 +50,8 @@ public class CrawlerController {
         config.setPolitenessDelay(setPolitenessDelay);
         config.setMaxDepthOfCrawling(setMaxDepth);
         config.setMaxPagesToFetch(setMaxPages);
-        config.setIncludeBinaryContentInCrawling(setIncludeBinaryContent);
+        //Set Default to True
+        config.setIncludeBinaryContentInCrawling(true);
         config.setResumableCrawling(setResumableCrawling);
 
         /*
