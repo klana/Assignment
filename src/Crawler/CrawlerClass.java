@@ -83,8 +83,12 @@ public class CrawlerClass extends WebCrawler {
             String html = htmlParseData.getHtml();
             Set<WebURL> links = htmlParseData.getOutgoingUrls();
             pageDetails = SharedFunction.getPageTitle(html, charset);
-
             System.out.println("Page Title: " + pageDetails.getPageTitle());
+            
+            pageDetails = SharedFunction.getKeywords(html, charset);
+            pageDetails = SharedFunction.getDescription(html, charset);
+
+          
             System.out.println(text);
             //System.out.println(html);
 

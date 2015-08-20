@@ -5,6 +5,8 @@
  */
 package Crawler;
 
+import java.util.HashSet;
+
 /**
  *
  * @author PLian7156538
@@ -12,8 +14,9 @@ package Crawler;
 public class PageDetails {
 
     //Get Page Title
-
     String pageTitle;
+    String[] pageKeywords;
+    String description;
 
     public String getPageTitle() {
         return pageTitle;
@@ -22,4 +25,21 @@ public class PageDetails {
     public void setPageTitle(String pageTitle) {
         this.pageTitle = pageTitle;
     }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String[] getPageKeywords() {
+        return pageKeywords;
+    }
+
+    public void setPageKeywords(String[] pageKeywords) {
+        this.pageKeywords = pageKeywords;
+    }
+
 }

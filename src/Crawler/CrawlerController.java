@@ -27,7 +27,7 @@ public class CrawlerController {
         if (args.length < 7) {
             return;
         }
-        int numberOfDomain = 1;
+        
         //Setting before Crawling
         String setStorageFolder = args[0];
         int setNumberOfCrawler = Integer.parseInt(args[1]);

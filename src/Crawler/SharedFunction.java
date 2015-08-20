@@ -22,6 +22,10 @@ public class SharedFunction {
     private static final Pattern CHARSET_HEADER = Pattern.compile("charset=([-_a-zA-Z0-9]+)", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
     private static final Pattern TITLE_HEADER = Pattern.compile("\\<title>(.*)\\</title>", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
+    //private static final Pattern KEYWORDS_TAG = Pattern.compile("<meta name\\s?=\\s?\"keywords\"\\scontent\\s?=\\s?\".*\"/?>", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    private static final Pattern KEYWORDS_TAG = Pattern.compile("\\<meta name=\"keywords\" content=\"(.*)\"/>", Pattern.CASE_INSENSITIVE);
+    private static final Pattern DESCRIPTION_TAG = Pattern.compile("\\<meta name=\"description\" content=\"(.*)\"/>", Pattern.CASE_INSENSITIVE );
+
     public static int countCommas(String CrawlDomains) {
         int noOfCommas = 0;
 
@@ -39,7 +43,7 @@ public class SharedFunction {
         char[] buffer = new char[1024];
         StringBuilder str = new StringBuilder();
         PageDetails pageDetails = new PageDetails();
-        
+
         try {
             if (charsetName == null) {
                 charset = Charset.defaultCharset();
@@ -70,6 +74,88 @@ public class SharedFunction {
                 //return null;
             }
 
+        } catch (Exception ex) {
+
+        }
+        return pageDetails;
+    }
+
+    public static PageDetails getKeywords(String html, Charset charsetName) {
+        Charset charset;
+        int noOfChar = 0, totalReadChar = 0;
+        char[] buffer = new char[1024];
+        StringBuilder str = new StringBuilder();
+        PageDetails pageDetails = new PageDetails();
+
+        try {
+            if (charsetName == null) {
+                charset = Charset.defaultCharset();
+            } else {
+                charset = charsetName;
+            }
+
+            InputStream inputStream = IOUtils.toInputStream(html, charset.toString());
+            BufferedReader buffReader = new BufferedReader(new InputStreamReader(inputStream, charset));
+
+            // read until EOF or first 8192 characters
+            while (totalReadChar < 8192 && (noOfChar = buffReader.read(buffer, 0, buffer.length)) != -1) {
+                str.append(buffer, 0, noOfChar);
+                totalReadChar += noOfChar;
+            }
+            buffReader.close();
+
+            Matcher matcher = KEYWORDS_TAG.matcher(str);
+            if (matcher.find()) {
+                String tempKeywords = matcher.group(1);
+                int noOfCommas = countCommas(tempKeywords);
+                String[] Keywords = new String[noOfCommas];
+                Keywords = tempKeywords.split("\\s*,\\s*");
+
+                pageDetails.setPageKeywords(Keywords);
+            } else {
+                pageDetails.setPageKeywords(null);
+
+            }
+        } catch (Exception ex) {
+
+        }
+        return pageDetails;
+    }
+
+    public static PageDetails getDescription(String html, Charset charsetName) {
+        Charset charset;
+        int noOfChar = 0, totalReadChar = 0;
+        char[] buffer = new char[1024];
+        StringBuilder str = new StringBuilder();
+        PageDetails pageDetails = new PageDetails();
+
+        try {
+            if (charsetName == null) {
+                charset = Charset.defaultCharset();
+            } else {
+                charset = charsetName;
+            }
+
+            InputStream inputStream = IOUtils.toInputStream(html, charset.toString());
+            BufferedReader buffReader = new BufferedReader(new InputStreamReader(inputStream, charset));
+
+            // read until EOF or first 8192 characters
+            while (totalReadChar < 8192 && (noOfChar = buffReader.read(buffer, 0, buffer.length)) != -1) {
+                str.append(buffer, 0, noOfChar);
+                totalReadChar += noOfChar;
+            }
+            buffReader.close();
+
+            Matcher matcher = DESCRIPTION_TAG.matcher(str);
+            if (matcher.find()) {
+                int indexCount = matcher.group(1).indexOf('/');
+                String description = matcher.group(1).substring(0,indexCount);
+                
+                pageDetails.setDescription(description);
+            } else {
+                pageDetails.setDescription(null);
+                //return null;
+            }
         } catch (Exception ex) {
 
         }
