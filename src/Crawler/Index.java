@@ -32,9 +32,15 @@ public class Index {
 
         System.out.println("Enter Number Of Crawler (Number of concurrent threads)");
         setNumberOfCrawler = cin.nextInt();
+
         cin.nextLine();
-        System.out.println("Enter Crawl Domain(add , for a whole list)");
+
+        System.out.println("Enter Crawl Domain(eg http://sim.edu.sg/,http://https://moodle.uowplatform.edu.au/login/index.php)");
         setCrawlDomains = cin.nextLine();
+        //String tempCrawlDomains = cin.nextLine();
+        //int commasCount = countCommas(tempCrawlDomains);
+        //setCrawlDomains = new String[commasCount];
+        //setCrawlDomains = tempCrawlDomains.split(",");
 
         System.out.println("Enter Politeness Delay (Default 1000; So that no more than 1 request per second will be sent.)");
         setPolitenessDelay = cin.nextInt();
@@ -65,4 +71,5 @@ public class Index {
         config.setUp(args);
 
     }
+
 }
