@@ -9,8 +9,15 @@ import edu.uci.ics.crawler4j.crawler.Page;
 import edu.uci.ics.crawler4j.crawler.WebCrawler;
 import edu.uci.ics.crawler4j.parser.HtmlParseData;
 import edu.uci.ics.crawler4j.url.WebURL;
+import java.io.IOException;
 import java.nio.charset.Charset;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import org.apache.http.Header;
 
@@ -52,10 +59,14 @@ public class CrawlerClass extends WebCrawler {
         ContentType contentType;
         Charset charset = null;
         PageDetails pageDetails;
+        String Title = "";
+        String Description = "";
+        String text = "";
 
         System.out.println("Domain: " + domain);
         System.out.println("URL: " + URL);
-        
+        DBConnection Conn = new DBConnection();
+
         Header[] responseHeaders = page.getFetchResponseHeaders();
         if (responseHeaders != null) {
             System.out.println("Response headers:");
@@ -79,17 +90,18 @@ public class CrawlerClass extends WebCrawler {
         if (page.getParseData() instanceof HtmlParseData) {
 
             HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
-            String text = htmlParseData.getText();
+            text = htmlParseData.getText();
             String html = htmlParseData.getHtml();
             Set<WebURL> links = htmlParseData.getOutgoingUrls();
             pageDetails = SharedFunction.getPageTitle(html, charset);
             System.out.println("Page Title: " + pageDetails.getPageTitle());
-            
+            Title = pageDetails.getPageTitle();
+
             pageDetails = SharedFunction.getKeywords(html, charset);
             pageDetails = SharedFunction.getDescription(html, charset);
+            Description = pageDetails.getDescription();
 
-          
-            System.out.println(text);
+            //System.out.println(text);
             //System.out.println(html);
 
             System.out.println("Text length:" + text.length());
@@ -100,50 +112,37 @@ public class CrawlerClass extends WebCrawler {
             logger.debug("Number of outgoing links: {}", links.size());
         }
 
+        try {
+            
+            InserToDb(Conn, URL, Description, Title, text);
+        } catch (SQLException ex) {
+            Logger.getLogger(CrawlerClass.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(CrawlerClass.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
         logger.debug("=============");
     }
+
+    public void InserToDb(DBConnection Conn, String url, String Descirption, String Title, String Content) throws SQLException, IOException {
+       
+        String sql = "select * from contentdb where URL = '" + url + "'";
+        ResultSet rs = Conn.executeStatement(sql);
+
+        if (rs.next()) {
+
+        } else {
+            //store the URL to database to avoid parsing again
+            //sql = "INSERT INTO  `contentdb` " + "(`URL`, ) VALUES " + "(?);";
+            sql = "INSERT INTO `contentdb`(`URL`, `Description`, `Title`, `Content_description`) "
+                    + "VALUES(?,?,?,?);";
+            PreparedStatement stmt = Conn.conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            stmt.setString(1, url);
+            stmt.setString(2, Descirption);
+            stmt.setString(3, Title);
+            stmt.setString(4, Content);
+            stmt.execute();
+
+        }
+    }
 }
-/*public static void main(String[] args) 
- {
-        
- // TODO code application logic here
-        
- /*Connection conx = null;
- Statement stmt = null;
- //String Driver="";
-        
- String URL = "jdbc:mysql://localhost:3306/";
- String db ="contentdb";
- String u_name = "root";
- String u_pwd="";
- String query ="";
-        
- try
- {
- Class.forName("com.mysql.jdbc.Driver").newInstance();
- conx = DriverManager.getConnection(URL+db,u_name,u_pwd);
-            
-            
- if(conx!= null)
- {
- stmt = conx.createStatement();
-                
- }
-            
- }
- catch(Exception ex)
- {
-        
- }
- finally
- {
- try
- {
- conx.close();
- }
- catch(Exception ex)
- {
-                
- }
- }*/
-    //}

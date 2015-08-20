@@ -19,22 +19,22 @@ import org.slf4j.LoggerFactory;
  * @author Ellen
  */
 public class CrawlerController {
-
+    
     private static final Logger logger = LoggerFactory.getLogger(CrawlerController.class);
-
+    
     public void setUp(String[] args) throws Exception {
-
+        
         if (args.length < 7) {
             return;
         }
-        
+
         //Setting before Crawling
         String setStorageFolder = args[0];
         int setNumberOfCrawler = Integer.parseInt(args[1]);
-
+        
         String tempDomain = args[2];
         int commasCount = countCommas(tempDomain);
-
+        
         String[] setCrawlDomains = new String[commasCount];
         setCrawlDomains = tempDomain.split(",");
         
@@ -43,9 +43,9 @@ public class CrawlerController {
         int setMaxPages = Integer.parseInt(args[5]);
         //boolean setIncludeBinaryContent = Boolean.parseBoolean(args[6]);
         boolean setResumableCrawling = Boolean.parseBoolean(args[6]);
-
+        
         CrawlConfig config = new CrawlConfig();
-
+        
         config.setCrawlStorageFolder(setStorageFolder);
         config.setPolitenessDelay(setPolitenessDelay);
         config.setMaxDepthOfCrawling(setMaxDepth);
@@ -53,6 +53,7 @@ public class CrawlerController {
         //Set Default to True
         config.setIncludeBinaryContentInCrawling(true);
         config.setResumableCrawling(setResumableCrawling);
+        config.setMaxDownloadSize(30000000);
 
         /*
          * Instantiate the controller for this crawl.
@@ -70,9 +71,9 @@ public class CrawlerController {
         for (String domainName : setCrawlDomains) {
             controller.addSeed(domainName);
         }
-
+        
         controller.start(CrawlerClass.class, setNumberOfCrawler);
-
+        
     }
-
+    
 }
