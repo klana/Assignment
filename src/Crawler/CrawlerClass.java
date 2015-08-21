@@ -18,6 +18,10 @@ import java.sql.Statement;
 import java.util.Set;
 import java.util.regex.Pattern;
 import org.apache.http.Header;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 /**
  *
@@ -25,8 +29,8 @@ import org.apache.http.Header;
  */
 public class CrawlerClass extends WebCrawler {
 
-    private static final Pattern SKIP_CRAWL_PATTERN = Pattern.compile(".*\\.(bmp|gif|jpg|png|ppt|pptx)$");
-    private static final Pattern TO_CRAWL_PATTERN = Pattern.compile(".*\\.(txt|docx|doc|html|aspx|php|css|js|pdf|ps|)$", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    private static final Pattern SKIP_CRAWL_PATTERN = Pattern.compile(".*\\.(bmp|gif|jpg|png|ppt|pptx|css|docx|doc|ps)$");
+    private static final Pattern TO_CRAWL_PATTERN = Pattern.compile(".*\\.(txt|html|aspx|php|pdf)$", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
     @Override
     public boolean shouldVisit(Page referringPage, WebURL url) {
@@ -90,9 +94,8 @@ public class CrawlerClass extends WebCrawler {
             text = func.stripPDFToText(func.downloadFile(URLs));
             System.out.println(text.length());
         }
-        
-        if (URLs.contains("txt"))
-        {
+
+        if (URLs.contains("txt")) {
             SharedFunction func = new SharedFunction();
             text = func.readTextFile(func.downloadFile(URLs));
             System.out.println(text.length());
@@ -108,9 +111,31 @@ public class CrawlerClass extends WebCrawler {
             System.out.println("Page Title: " + pageDetails.getPageTitle());
             Title = pageDetails.getPageTitle();
 
+            Charset charsetName;
+            if (charset == null) {
+                charsetName = Charset.defaultCharset();
+            } else {
+                charsetName = charset;
+            }
+
+            Document doc = Jsoup.parse(html, charsetName.toString());
+            Elements elements = doc.select("h1,h2,h3,h4,h5");
+            for (Element element : elements) {
+                StringBuilder sb = new StringBuilder(element.toString());
+
+                Element next = element.nextElementSibling();
+                while (next != null && !next.tagName().startsWith("h")) {
+                    sb.append(next.toString()).append("\n");
+                    next = next.nextElementSibling();
+                }
+                System.out.println(sb);
+
+            }
+
             pageDetails = SharedFunction.getKeywords(html, charset);
             pageDetails = SharedFunction.getDescription(html, charset);
             Description = pageDetails.getDescription();
+
 
             //System.out.println(text);
             //System.out.println(html);
