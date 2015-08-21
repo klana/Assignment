@@ -6,11 +6,18 @@
 package Crawler;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.StringWriter;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.util.PDFTextStripper;
 import org.apache.tika.io.IOUtils;
 
 /**
@@ -24,7 +31,8 @@ public class SharedFunction {
 
     //private static final Pattern KEYWORDS_TAG = Pattern.compile("<meta name\\s?=\\s?\"keywords\"\\scontent\\s?=\\s?\".*\"/?>", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
     private static final Pattern KEYWORDS_TAG = Pattern.compile("\\<meta name=\"keywords\" content=\"(.*)\"/>", Pattern.CASE_INSENSITIVE);
-    private static final Pattern DESCRIPTION_TAG = Pattern.compile("\\<meta name=\"description\" content=\"(.*)\"/>", Pattern.CASE_INSENSITIVE );
+    private static final Pattern DESCRIPTION_TAG = Pattern.compile("\\<meta name=\"description\" content=\"(.*)\"/>", Pattern.CASE_INSENSITIVE);
+    public final static int size = 1024;
 
     public static int countCommas(String CrawlDomains) {
         int noOfCommas = 0;
@@ -40,7 +48,7 @@ public class SharedFunction {
     public static PageDetails getPageTitle(String html, Charset charsetName) {
         Charset charset;
         int noOfChar = 0, totalReadChar = 0;
-        char[] buffer = new char[1024];
+        char[] buffer = new char[size];
         StringBuilder str = new StringBuilder();
         PageDetails pageDetails = new PageDetails();
 
@@ -80,10 +88,91 @@ public class SharedFunction {
         return pageDetails;
     }
 
+    public String downloadFile(String url) {
+        InputStream inputStream = null;
+        String fileName = url.substring(url.lastIndexOf('/') + 1);
+        byte[] buffer;
+        try {
+            URL fileURL = new URL(url);
+            inputStream = fileURL.openStream();
+            FileOutputStream fos = new FileOutputStream(new File(fileName));
+            System.out.println("Reading File...");
+            int length = -1;
+            buffer = new byte[SharedFunction.size];// buffer for portion of data from
+            // connection
+            while ((length = inputStream.read(buffer)) > -1) {
+                fos.write(buffer, 0, length);
+            }
+            fos.close();
+            inputStream.close();
+            System.out.println("File was Downloaded");
+
+        } catch (Exception ex) {
+            //throw ex;
+        }
+        return fileName;
+    }
+
+    public String stripPDFToText(String fileName) {
+        File fileReader;
+        StringWriter stringWriter = new StringWriter();
+        PDDocument pdfDoc;
+
+        try {
+            fileReader = new File(fileName);
+
+            pdfDoc = PDDocument.load(fileReader);
+            PDFTextStripper textStripper = new PDFTextStripper();
+            textStripper.setStartPage(1);
+            textStripper.setEndPage(pdfDoc.getNumberOfPages());
+            textStripper.writeText(pdfDoc, stringWriter);
+
+            //System.out.println(stringWriter.toString());
+            if (pdfDoc != null) {
+                pdfDoc.close();
+            }
+            fileReader.delete();
+            //bufferWriter.close();
+            stringWriter.close();
+
+        } catch (Exception ex) {
+            //throw ex;
+        }
+
+        return stringWriter.toString();
+    }
+
+    public String readTextFile(String fileName) {
+        FileReader fileReader;
+        File file;
+        StringBuilder stringBuilder = new StringBuilder();
+        BufferedReader bufferedReader;
+
+        try {
+            file = new File(fileName);
+            fileReader = new FileReader(file);
+            bufferedReader = new BufferedReader(fileReader);
+            String line = bufferedReader.readLine();
+
+            while (line != null) {
+                stringBuilder.append(line);
+                stringBuilder.append(System.lineSeparator());
+                line = bufferedReader.readLine();
+            }
+
+            fileReader.close();
+            bufferedReader.close();
+            file.delete();
+        } catch (Exception ex) {
+
+        }
+        return stringBuilder.toString();
+    }
+
     public static PageDetails getKeywords(String html, Charset charsetName) {
         Charset charset;
         int noOfChar = 0, totalReadChar = 0;
-        char[] buffer = new char[1024];
+        char[] buffer = new char[size];
         StringBuilder str = new StringBuilder();
         PageDetails pageDetails = new PageDetails();
 
@@ -149,8 +238,8 @@ public class SharedFunction {
             Matcher matcher = DESCRIPTION_TAG.matcher(str);
             if (matcher.find()) {
                 int indexCount = matcher.group(1).indexOf('/');
-                String description = matcher.group(1).substring(0,indexCount);
-                
+                String description = matcher.group(1).substring(0, indexCount);
+
                 pageDetails.setDescription(description);
             } else {
                 pageDetails.setDescription(null);

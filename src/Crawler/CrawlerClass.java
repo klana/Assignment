@@ -16,8 +16,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import org.apache.http.Header;
 
@@ -55,7 +53,7 @@ public class CrawlerClass extends WebCrawler {
     @Override
     public void visit(Page page) {
         String domain = page.getWebURL().getDomain();
-        String URL = page.getWebURL().getURL();
+        String URLs = page.getWebURL().getURL();
         ContentType contentType;
         Charset charset = null;
         PageDetails pageDetails;
@@ -64,8 +62,8 @@ public class CrawlerClass extends WebCrawler {
         String text = "";
 
         System.out.println("Domain: " + domain);
-        System.out.println("URL: " + URL);
-        DBConnection Conn = new DBConnection();
+        System.out.println("URL: " + URLs);
+        //DBConnection Conn = new DBConnection();
 
         Header[] responseHeaders = page.getFetchResponseHeaders();
         if (responseHeaders != null) {
@@ -87,6 +85,19 @@ public class CrawlerClass extends WebCrawler {
             }
         }
 
+        if (URLs.contains("pdf")) {
+            SharedFunction func = new SharedFunction();
+            text = func.stripPDFToText(func.downloadFile(URLs));
+            System.out.println(text.length());
+        }
+        
+        if (URLs.contains("txt"))
+        {
+            SharedFunction func = new SharedFunction();
+            text = func.readTextFile(func.downloadFile(URLs));
+            System.out.println(text.length());
+        }
+
         if (page.getParseData() instanceof HtmlParseData) {
 
             HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
@@ -103,7 +114,6 @@ public class CrawlerClass extends WebCrawler {
 
             //System.out.println(text);
             //System.out.println(html);
-
             System.out.println("Text length:" + text.length());
             System.out.println("Html length:" + html.length());
             System.out.println("Number of outgoing links:" + links.size());
@@ -112,20 +122,20 @@ public class CrawlerClass extends WebCrawler {
             logger.debug("Number of outgoing links: {}", links.size());
         }
 
-        try {
-            
-            InserToDb(Conn, URL, Description, Title, text);
-        } catch (SQLException ex) {
-            Logger.getLogger(CrawlerClass.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(CrawlerClass.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        /* try {
 
-        logger.debug("=============");
+         InserToDb(Conn, URLs, Description, Title, text);
+         } catch (SQLException ex) {
+         Logger.getLogger(CrawlerClass.class.getName()).log(Level.SEVERE, null, ex);
+         } catch (IOException ex) {
+         Logger.getLogger(CrawlerClass.class.getName()).log(Level.SEVERE, null, ex);
+         }*/
+        logger.debug(
+                "=============");
     }
 
     public void InserToDb(DBConnection Conn, String url, String Descirption, String Title, String Content) throws SQLException, IOException {
-       
+
         String sql = "select * from contentdb where URL = '" + url + "'";
         ResultSet rs = Conn.executeStatement(sql);
 
