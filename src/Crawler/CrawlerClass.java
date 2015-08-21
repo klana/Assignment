@@ -16,6 +16,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import org.apache.http.Header;
 import org.jsoup.Jsoup;
@@ -64,19 +66,20 @@ public class CrawlerClass extends WebCrawler {
         String Title = "";
         String Description = "";
         String text = "";
+        String[] Keywords = new String[]{};
 
         System.out.println("Domain: " + domain);
         System.out.println("URL: " + URLs);
-        //DBConnection Conn = new DBConnection();
+        DBConnection Conn = new DBConnection();
 
         Header[] responseHeaders = page.getFetchResponseHeaders();
         if (responseHeaders != null) {
             System.out.println("Response headers:");
-            logger.debug("Response headers:");
+            //logger.debug("Response headers:");
 
             for (Header header : responseHeaders) {
                 //System.out.println(header.getName() + ":" + header.getValue());
-                logger.debug("\t{}: {}", header.getName(), header.getValue());
+                //logger.debug("\t{}: {}", header.getName(), header.getValue());
 
                 if ("Content-Type".equals(header.getName())) {
                     if (header.getName() == null) {
@@ -133,9 +136,9 @@ public class CrawlerClass extends WebCrawler {
             }
 
             pageDetails = SharedFunction.getKeywords(html, charset);
+            Keywords = pageDetails.getPageKeywords();
             pageDetails = SharedFunction.getDescription(html, charset);
             Description = pageDetails.getDescription();
-
 
             //System.out.println(text);
             //System.out.println(html);
@@ -147,37 +150,60 @@ public class CrawlerClass extends WebCrawler {
             logger.debug("Number of outgoing links: {}", links.size());
         }
 
-        /* try {
+        try {
 
-         InserToDb(Conn, URLs, Description, Title, text);
-         } catch (SQLException ex) {
-         Logger.getLogger(CrawlerClass.class.getName()).log(Level.SEVERE, null, ex);
-         } catch (IOException ex) {
-         Logger.getLogger(CrawlerClass.class.getName()).log(Level.SEVERE, null, ex);
-         }*/
+            InsertToContentDb(Conn, URLs, Description, Title, text);
+            if (Keywords.length > 0) {
+                InsertToIndexDb(Conn, URLs, Keywords);
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(CrawlerClass.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(CrawlerClass.class.getName()).log(Level.SEVERE, null, ex);
+        }
         logger.debug(
                 "=============");
     }
 
-    public void InserToDb(DBConnection Conn, String url, String Descirption, String Title, String Content) throws SQLException, IOException {
+    public void InsertToContentDb(DBConnection Conn, String url, String Description, String Title, String Content) throws SQLException, IOException {
 
         String sql = "select * from contentdb where URL = '" + url + "'";
         ResultSet rs = Conn.executeStatement(sql);
 
-        if (rs.next()) {
-
-        } else {
+        if (!rs.next()) {
             //store the URL to database to avoid parsing again
             //sql = "INSERT INTO  `contentdb` " + "(`URL`, ) VALUES " + "(?);";
             sql = "INSERT INTO `contentdb`(`URL`, `Description`, `Title`, `Content_description`) "
                     + "VALUES(?,?,?,?);";
             PreparedStatement stmt = Conn.conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             stmt.setString(1, url);
-            stmt.setString(2, Descirption);
+            stmt.setString(2, Description);
             stmt.setString(3, Title);
             stmt.setString(4, Content);
+            stmt.execute();
+        }
+    }
+
+    public void InsertToIndexDb(DBConnection Conn, String url, String[] Keywords) throws SQLException, IOException {
+
+        String sql = "select * from contentdb where URL = '" + url + "'";
+        ResultSet rs = Conn.executeStatement(sql);
+
+        if (!rs.next()) {
+            //store the URL to database to avoid parsing again
+            int ID = rs.getInt("ID");
+            sql = "INSERT INTO `indexdb`(`ID`, `Keyword`) "
+                    + "VALUES(?,?);";
+            PreparedStatement stmt = Conn.conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+
+            for (String words : Keywords) {
+                stmt.setInt(1, ID);
+                stmt.setString(2, words);
+            }
+
             stmt.execute();
 
         }
     }
+
 }

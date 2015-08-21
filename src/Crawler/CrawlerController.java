@@ -19,39 +19,38 @@ import org.slf4j.LoggerFactory;
  * @author Ellen
  */
 public class CrawlerController {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(CrawlerController.class);
-    
+
     public void setUp(String[] args) throws Exception {
-        
-        if (args.length < 7) {
+
+        if (args.length < 2) {
             return;
         }
 
-        //Setting before Crawling
-        String setStorageFolder = args[0];
-        int setNumberOfCrawler = Integer.parseInt(args[1]);
-        
-        String tempDomain = args[2];
+        //Setting before Crawling (default)
+        String setStorageFolder = "data";
+        int setNumberOfCrawler = 10;
+        int setPolitenessDelay = 1000;
+        int setMaxDepth = -1;
+        int setMaxPages = -1;
+        boolean setIncludeBinary = true;
+
+        String tempDomain = args[0];
         int commasCount = countCommas(tempDomain);
-        
+
         String[] setCrawlDomains = new String[commasCount];
         setCrawlDomains = tempDomain.split(",");
-        
-        int setPolitenessDelay = Integer.parseInt(args[3]);
-        int setMaxDepth = Integer.parseInt(args[4]);
-        int setMaxPages = Integer.parseInt(args[5]);
-        //boolean setIncludeBinaryContent = Boolean.parseBoolean(args[6]);
-        boolean setResumableCrawling = Boolean.parseBoolean(args[6]);
-        
+
+        boolean setResumableCrawling = Boolean.parseBoolean(args[1]);
+
         CrawlConfig config = new CrawlConfig();
-        
+
         config.setCrawlStorageFolder(setStorageFolder);
         config.setPolitenessDelay(setPolitenessDelay);
         config.setMaxDepthOfCrawling(setMaxDepth);
         config.setMaxPagesToFetch(setMaxPages);
-        //Set Default to True
-        config.setIncludeBinaryContentInCrawling(true);
+        config.setIncludeBinaryContentInCrawling(setIncludeBinary);
         config.setResumableCrawling(setResumableCrawling);
         config.setMaxDownloadSize(30000000);
 
@@ -71,9 +70,9 @@ public class CrawlerController {
         for (String domainName : setCrawlDomains) {
             controller.addSeed(domainName);
         }
-        
+
         controller.start(CrawlerClass.class, setNumberOfCrawler);
-        
+
     }
-    
+
 }
