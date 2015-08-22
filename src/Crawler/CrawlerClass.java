@@ -203,7 +203,7 @@ public class CrawlerClass extends WebCrawler {
         if (rs.next()) {
             //store the URL to database to avoid parsing again
             int ID = rs.getInt("ID");
-            sql = "INSERT INTO `indexdb`(`ID`, `Keyword`) "
+            sql = "INSERT INTO `keyworddb`(`ID`, `Keyword`) "
                     + "VALUES(?,?);";
             PreparedStatement stmt = Conn.conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
