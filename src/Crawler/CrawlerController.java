@@ -30,7 +30,7 @@ public class CrawlerController {
 
         //Setting before Crawling (default)
         String setStorageFolder = "data";
-        int setNumberOfCrawler = 10;
+        int setNumberOfCrawler = 30;
         int setPolitenessDelay = 1000;
         int setMaxDepth = -1;
         int setMaxPages = -1;

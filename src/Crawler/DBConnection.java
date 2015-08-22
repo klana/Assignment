@@ -29,7 +29,7 @@ public class DBConnection {
             Class.forName("com.mysql.jdbc.Driver");
 
             conn = DriverManager.getConnection(URL + db, u_name, u_pwd);
-            System.out.println("conn built");
+            //System.out.println("conn built");
 
         } catch (SQLException e) {
             e.printStackTrace();

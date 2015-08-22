@@ -9,16 +9,25 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.util.PDFTextStripper;
 import org.apache.tika.io.IOUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 /**
  *
@@ -96,7 +105,7 @@ public class SharedFunction {
             URL fileURL = new URL(url);
             inputStream = fileURL.openStream();
             FileOutputStream fos = new FileOutputStream(new File(fileName));
-            System.out.println("Reading File...");
+            //System.out.println("Reading File...");
             int length = -1;
             buffer = new byte[SharedFunction.size];// buffer for portion of data from
             // connection
@@ -105,7 +114,7 @@ public class SharedFunction {
             }
             fos.close();
             inputStream.close();
-            System.out.println("File was Downloaded");
+            //System.out.println("File was Downloaded");
 
         } catch (Exception ex) {
             //throw ex;
@@ -169,6 +178,117 @@ public class SharedFunction {
         return stringBuilder.toString();
     }
 
+    public void getAllImage(DBConnection Conn, Document doc, String url) {
+        String[] altImageList = new String[]{};
+
+        try {
+            //ocument doc = Jsoup.parse(html, charsetName.toString());
+            Elements elements = doc.getElementsByTag("IMG");
+            for (int imageCount = 0; imageCount < elements.size(); imageCount++) {
+                //System.out.println("Sources of " + imageCount + ":" + elements.get(imageCount));
+                //System.out.println(url);
+                if (elements.get(imageCount).attr("alt").trim().length() > 0) {
+                    //altImageList[imageCount + 1] = elements.get(imageCount).attr("alt");
+                    InsertToImageDb(Conn, url, elements.get(imageCount).attr("alt"));
+                }
+            }
+
+        } catch (SQLException | IOException ex) {
+
+        }
+
+    }
+
+    public void getAllHeader(DBConnection Conn, Document doc, String url) {
+
+        String tagContent;
+        Elements elements = doc.select("h1,h2,h3,h4,h5");
+        try {
+            for (Element element : elements) {
+                tagContent = Jsoup.parse(element.toString()).text();
+                StringBuilder sb = new StringBuilder(tagContent);
+
+                Element next = element.nextElementSibling();
+                while (next != null && next.tagName().startsWith("h")) {
+                    tagContent = Jsoup.parse(next.toString()).text();
+                    sb.append(tagContent).append("\n");
+                    next = next.nextElementSibling();
+                }
+                //System.out.println(sb);
+                String[] lines = sb.toString().split("\\n");
+                InsertToHeaderDb(Conn, url, lines);
+            }
+        } catch (Exception ex) {
+
+        }
+
+    }
+
+    public void InsertToHeaderDb(DBConnection Conn, String url, String[] headerList) throws SQLException, IOException {
+
+        String sql = "select * from contentdb where URL = '" + url + "'";
+        ResultSet rs = Conn.executeStatement(sql);
+
+        if (rs.next()) {
+            //store the URL to database to avoid parsing again
+            int ID = rs.getInt("ID");
+            sql = "INSERT INTO `headerdb`(`ID`, `headerText`) "
+                    + "VALUES(?,?);";
+            PreparedStatement stmt = Conn.conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+
+            for (String headerText : headerList) {
+                stmt.setInt(1, ID);
+                stmt.setString(2, headerText.trim());
+            }
+            stmt.execute();
+
+        }
+    }
+
+    public void InsertToImageDb(DBConnection Conn, String url, String altImage) throws SQLException, IOException {
+
+        String sql = "select * from contentdb where URL = '" + url + "'";
+        ResultSet rs = Conn.executeStatement(sql);
+
+        if (rs.next()) {
+            //store the URL to database to avoid parsing again
+            int ID = rs.getInt("ID");
+            sql = "INSERT INTO `imagedb`(`ID`, `altText`) "
+                    + "VALUES(?,?);";
+            PreparedStatement stmt = Conn.conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+
+            stmt.setInt(1, ID);
+            stmt.setString(2, altImage.trim());
+
+            stmt.execute();
+
+        }
+    }
+
+    public static PageDetails getExtension(String url) {
+        String extension = "";
+        PageDetails pageDetails = new PageDetails();
+
+        try {
+
+            extension = url.substring(url.lastIndexOf('.') + 1);
+
+            if (extension.indexOf('?') > 0) {
+                extension = extension.substring(0,extension.indexOf('?'));
+            }
+
+            if ("".equals(extension)) {
+                pageDetails.setDescription(null);
+            } else {
+                pageDetails.setExtension(extension);
+            }
+
+        } catch (Exception ex) {
+
+        }
+        return pageDetails;
+    }
+
     public static PageDetails getKeywords(String html, Charset charsetName) {
         Charset charset;
         int noOfChar = 0, totalReadChar = 0;
@@ -211,7 +331,7 @@ public class SharedFunction {
         return pageDetails;
     }
 
-       public static PageDetails getExtension(String html, Charset charsetName) {
+    public static PageDetails getExtension(String html, Charset charsetName) {
         Charset charset;
         int noOfChar = 0, totalReadChar = 0;
         char[] buffer = new char[size];
@@ -252,7 +372,7 @@ public class SharedFunction {
         }
         return pageDetails;
     }
-    
+
     public static PageDetails getDescription(String html, Charset charsetName) {
         Charset charset;
         int noOfChar = 0, totalReadChar = 0;

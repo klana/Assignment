@@ -17,6 +17,8 @@ public class PageDetails {
     String pageTitle;
     String[] pageKeywords;
     String description;
+    String extension;
+
 
     public String getPageTitle() {
         return pageTitle;
@@ -40,6 +42,14 @@ public class PageDetails {
 
     public void setPageKeywords(String[] pageKeywords) {
         this.pageKeywords = pageKeywords;
+    }
+    
+      public String getExtension() {
+        return extension;
+    }
+
+    public void setExtension(String extension) {
+        this.extension = extension;
     }
 
 }
